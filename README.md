@@ -5,9 +5,7 @@ A minimal multi-tenant chatbot platform: register/login, create projects
 via the OpenAI Responses API, and optionally attach files via the OpenAI
 Files API.
 
-Stack: **FastAPI + SQLite (SQLAlchemy) + JWT auth + vanilla HTML/JS frontend**
-(no build step — the whole frontend is 3 static files served by FastAPI).
-
+Stack: FastAPI + SQLite (SQLAlchemy) + JWT auth + vanilla HTML/JS frontend.
 ## Running locally
 
 ```bash
