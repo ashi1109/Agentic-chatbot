@@ -10,7 +10,9 @@ from app.routers.projects import get_owned_project
 
 router = APIRouter(prefix="/projects", tags=["chat"])
 
-client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+client = AsyncOpenAI(
+    api_key=settings.OPENAI_API_KEY,
+    base_url="https://api.groq.com/openai/v1",)
 
 
 @router.post("/{project_id}/chat", response_model=schemas.ChatResponse)
@@ -20,17 +22,14 @@ async def chat(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # Make sure the project exists and belongs to the current user.
     project = get_owned_project(project_id, db, user)
 
-    # Only active projects can receive chat messages.
     if project.status != "active":
         raise HTTPException(
             status_code=400,
             detail="Project is inactive",
         )
 
-    # Load the existing conversation history from the database.
     history = (
         db.query(models.Message)
         .filter(models.Message.project_id == project.id)
@@ -41,7 +40,6 @@ async def chat(
         .all()
     )
 
-    # Convert stored messages into OpenAI input format.
     input_items = [
         {
             "role": message.role,
@@ -50,8 +48,6 @@ async def chat(
         for message in history
     ]
 
-    # Add the current user message to the request,
-    # but don't save it to the database yet.
     input_items.append(
         {
             "role": "user",
@@ -59,7 +55,6 @@ async def chat(
         }
     )
 
-    # Call the LLM before modifying the database.
     try:
         response = await client.responses.create(
             model=settings.OPENAI_MODEL,
@@ -69,15 +64,12 @@ async def chat(
 
         reply_text = response.output_text
 
-    except OpenAIError:
-        # Since neither message has been committed yet,
-        # a provider failure leaves the database unchanged.
+    except OpenAIError as e:
         raise HTTPException(
             status_code=502,
             detail="LLM provider error",
         )
 
-    # Only save the conversation after the LLM succeeds.
     user_msg = models.Message(
         project_id=project.id,
         role="user",

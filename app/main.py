@@ -7,7 +7,7 @@ from app.routers import auth, chat, files, projects
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Minimal Chatbot Platform")
+app = FastAPI(title="Chatbot Platform")
 
 # CORS is wide open here for demo convenience; scope this to your frontend's
 # origin before shipping anything real.
