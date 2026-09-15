@@ -26,8 +26,8 @@ cp .env.example .env
 uvicorn app.main:app --reload
 ```
 
-Open **http://localhost:8000** — register a user, create a project, start
-chatting. Interactive API docs are at **http://localhost:8000/docs**.
+Open the link in the output ,register a user, create a project, start
+chatting.
 
 ## Project layout
 
@@ -47,38 +47,15 @@ app/
   static/            index.html / app.js / style.css (plain JS frontend)
 ```
 
-## API summary
-
-| Method | Path                          | Description                          |
-|--------|-------------------------------|---------------------------------------|
-| POST   | `/auth/register`              | Create a user                         |
-| POST   | `/auth/login`                 | Get a JWT (form fields: username, password) |
-| GET    | `/auth/me`                    | Current user info                     |
-| POST   | `/projects`                   | Create a project/agent                |
-| GET    | `/projects`                   | List my projects                      |
-| GET    | `/projects/{id}`              | Get one project                       |
-| PUT    | `/projects/{id}`              | Update name / description / system prompt |
-| DELETE | `/projects/{id}`              | Delete a project                      |
-| GET    | `/projects/{id}/messages`     | Chat history                          |
-| POST   | `/projects/{id}/chat`         | Send a message, get the reply         |
-| POST   | `/projects/{id}/files`        | Upload a file (OpenAI Files API)      |
-| GET    | `/projects/{id}/files`        | List uploaded files                   |
-
 All `/projects/*` routes require `Authorization: Bearer <token>` and only
 ever operate on projects owned by the caller.
 
 ## Deploying a public demo
-
-Any host that runs a Python web service works (Render, Railway, Fly.io).
-Example for **Render**:
 
 1. Push this repo to GitHub.
 2. New "Web Service" → connect the repo.
 3. Build command: `pip install -r requirements.txt`
 4. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 5. Add environment variables `SECRET_KEY`, `OPENAI_API_KEY`, `OPENAI_MODEL`.
-6. (Optional) attach a persistent disk if you want the SQLite file to
-   survive restarts; otherwise swap `DATABASE_URL` for a managed Postgres
-   instance — no code changes needed, SQLAlchemy handles both.
+   
 
-See `ARCHITECTURE.md` for design rationale and how to extend this.
