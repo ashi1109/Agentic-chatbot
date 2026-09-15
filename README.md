@@ -1,59 +1,79 @@
-# Minimal Chatbot Platform
+# Chatbot Platform
 
-A minimal multi-tenant chatbot platform: register/login, create projects
-("agents") each with their own system prompt and chat history, talk to them
-via the OpenAI Responses API, and optionally attach files via the OpenAI
-Files API.
+A minimal chatbot platform built with FastAPI, SQLite, and Groq.
 
-Stack: FastAPI + SQLite (SQLAlchemy) + JWT auth + vanilla HTML/JS frontend.
-## Running locally
+The platform allows users to create their own projects (agents), give each project a system prompt, and chat with it. Users can also view their conversation history and upload files to a project.
 
-```bash
-# 1. Create a virtualenv
-python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+The main goal of this project was to keep the implementation simple while covering the basic pieces needed for a multi-user chatbot platform.
 
-# 2. Install dependencies
-pip install -r requirements.txt
+## Features
 
-# 3. Configure environment
-cp .env.example .env
-# edit .env and set SECRET_KEY + OPENAI_API_KEY
+- User registration and login
+- JWT-based authentication
+- Create, view, update, and delete projects
+- Each project has its own system prompt
+- Project status (`active` / `inactive`)
+- Chat with the project using Groq
+- Conversation history stored in the database
+- Project-level access control
+- File upload and file listing for projects
+- Simple web interface served directly by FastAPI
 
-# 4. Run
-uvicorn app.main:app --reload
-```
+## Tech Stack
 
-Open the link in the output ,register a user, create a project, start
-chatting.
+- Python
+- FastAPI
+- SQLAlchemy
+- SQLite
+- JWT
+- Passlib + bcrypt
+- Groq API
+- OpenAI Python SDK (used with Groq's OpenAI-compatible API)
+- HTML, CSS, JavaScript
 
-## Project layout
+## How it works
 
-```
-app/
-  main.py            FastAPI app, router wiring, static file mount
-  config.py          env-driven settings
-  database.py        SQLAlchemy engine/session
-  models.py          User, Project, Message, ProjectFile
-  schemas.py         Pydantic request/response models
-  auth.py            password hashing, JWT issue/verify, current-user dep
-  routers/
-    auth.py          POST /auth/register, /auth/login, GET /auth/me
-    projects.py      CRUD for projects + GET messages
-    chat.py          POST /projects/{id}/chat  -> OpenAI Responses API
-    files.py         POST/GET /projects/{id}/files -> OpenAI Files API
-  static/            index.html / app.js / style.css (plain JS frontend)
-```
+A project acts as the chatbot/agent.
 
-All `/projects/*` routes require `Authorization: Bearer <token>` and only
-ever operate on projects owned by the caller.
+Each project has:
 
-## Deploying a public demo
+- Name
+- Description
+- System prompt
+- Status
+- Conversation history
+- Files associated with it
 
-1. Push this repo to GitHub.
-2. New "Web Service" → connect the repo.
-3. Build command: `pip install -r requirements.txt`
-4. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-5. Add environment variables `SECRET_KEY`, `OPENAI_API_KEY`, `OPENAI_MODEL`.
-   
+When a user sends a message, the backend first verifies the user's JWT and checks that the project belongs to that user.
 
+The previous messages for that project are then loaded from the database and sent along with the new message to the LLM.
+
+The LLM response is returned to the user and both sides of the conversation are stored in the database.
+
+### Chat flow
+
+```text
+User
+  |
+  v
+Frontend
+  |
+  v
+FastAPI API
+  |
+  +--> JWT authentication
+  |
+  +--> Check project ownership
+  |
+  +--> Check project status
+  |
+  +--> Load conversation history
+  |
+  v
+Groq API
+  |
+  v
+Save user + assistant messages
+  |
+  v
+Return response
